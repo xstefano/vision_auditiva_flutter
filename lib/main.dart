@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'api_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -46,6 +46,32 @@ class _MyHomePageState extends State<MyHomePage> {
   String lastWords = '';
   String base64Image = '';
 
+  final optionsMap = {
+    'analiza objeto': [
+      'AnalizarObjetos',
+      'Se analizará los objetos de la imagen',
+    ],
+    'detecta rostro': [
+      'DetectarRostro',
+      'Se detectará el rostro de la imagen',
+    ],
+    'analiza rostro': [
+      'AnalizarRostro',
+      'Se analizará los rostros de la imagen',
+    ],
+  };
+
+  final optionsMap2 = {
+    'describe imagen': [
+      'DescribirImagen',
+      'La imagen se va a describir espere unos segundos para que finalice',
+    ],
+    'lee texto': [
+      'LeerTexto',
+      'Se leera el texto de la imagen',
+    ],
+  };
+
   CameraController? cameraController;
   late List<CameraDescription> cameras;
 
@@ -58,8 +84,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _initializeCamera() async {
     cameras = await availableCameras();
     cameraController = CameraController(
-      cameras[0], // You can select the camera that you want to use here
-      ResolutionPreset.veryHigh,
+      cameras[0],
+      ResolutionPreset.max,
     );
     await cameraController!.initialize();
   }
@@ -68,13 +94,13 @@ class _MyHomePageState extends State<MyHomePage> {
     XFile? picture = await cameraController!.takePicture();
     List<int> bytes = await picture.readAsBytes();
     base64Image = base64Encode(bytes);
-    sendImageToAPI("TomaFoto");
+    await ApiService.sendImage(base64Image, "image");
   }
 
   Future<void> _speak(String text) async {
     await flutterTts.setLanguage('es-ES');
-    await flutterTts.setPitch(1.1);
-    await flutterTts.setSpeechRate(0.9);
+    await flutterTts.setPitch(1.0);
+    await flutterTts.setSpeechRate(0.7);
     await flutterTts.speak(text);
   }
 
@@ -97,6 +123,7 @@ class _MyHomePageState extends State<MyHomePage> {
     lastWords = '';
     bool isAvailable = await speech.initialize();
     if (isAvailable) {
+      takePicture();
       await speech.listen(
         onResult: resultListener,
         localeId: 'es_CL',
@@ -104,25 +131,38 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void resultListener(SpeechRecognitionResult result) {
-    // ignore: avoid_print
+  Future<void> resultListener(SpeechRecognitionResult result) async {
     if (result.finalResult) {
       logger.i(
           'Result listener final: ${result.finalResult}, words: ${result.recognizedWords}');
       setState(() {
-        lastWords = '${result.recognizedWords} - ${result.finalResult}';
+        lastWords = removeDiacritics(result.recognizedWords).toLowerCase();
       });
 
-      if (removeDiacritics(result.recognizedWords.toLowerCase())
-          .contains("hola aplicacion")) {
-        _speak('Hola usuario');
-      }
+      // Verificar si las palabras reconocidas están en el mapa de opciones
+      final option = optionsMap.keys.firstWhere(
+        (key) => key.split(' ').every((word) => lastWords.contains(word)),
+        orElse: () => '',
+      );
 
-      if (removeDiacritics(result.recognizedWords.toLowerCase())
-          .contains("toma foto")) {
-        _speak('La foto se tomara');
+      final option2 = optionsMap2.keys.firstWhere(
+        (key) => key.split(' ').every((word) => lastWords.contains(word)),
+        orElse: () => '',
+      );
+
+      // Si la opción existe, realizar la acción correspondiente
+      if (option.isNotEmpty) {
+        final action = optionsMap[option]!;
         takePicture();
-        _speak('Se ha tomado la foto');
+        await ApiService.sendRequest(action[0]);
+        _speak(action[1]);
+        await Future.delayed(const Duration(seconds: 5));
+        final lastResponse = await ApiService.getLastResponse();
+        _speak(lastResponse);
+      }
+      if (option2.isNotEmpty) {
+        String response = await ApiService.getImageDescription();
+        _speak(response);
       }
     }
   }
@@ -138,17 +178,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     return str;
-  }
-
-  void sendImageToAPI(String filename) async {
-    Uri apiUrl = Uri.parse("https://apivideofetcher.azurewebsites.net/Image");
-    Map<String, String> headers = {"Content-Type": "application/json"};
-
-    String jsonBody =
-        jsonEncode({"imageBase64": base64Image, "filename": filename});
-
-    http.Response response =
-        await http.post(apiUrl, headers: headers, body: jsonBody);
   }
 
   @override
