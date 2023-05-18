@@ -60,4 +60,10 @@ class ApiService {
         '$baseUrl/api/Vision/describe?imageUrl=https://apivideofetcher.azurewebsites.net/Image/image'));
     return response.body;
   }
+
+  static Future<String> getImageTexto() async {
+    final response = await http.get(Uri.parse(
+        '$baseUrl/api/Vision/read?imageUrl=https://apivideofetcher.azurewebsites.net/Image/image'));
+    return response.body;
+  }
 }

@@ -153,7 +153,6 @@ class _MyHomePageState extends State<MyHomePage> {
       // Si la opción existe, realizar la acción correspondiente
       if (option.isNotEmpty) {
         final action = optionsMap[option]!;
-        takePicture();
         await ApiService.sendRequest(action[0]);
         _speak(action[1]);
         await Future.delayed(const Duration(seconds: 5));
@@ -161,8 +160,19 @@ class _MyHomePageState extends State<MyHomePage> {
         _speak(lastResponse);
       }
       if (option2.isNotEmpty) {
-        String response = await ApiService.getImageDescription();
-        _speak(response);
+        final action2 = optionsMap2[option2]!;
+
+        if (action2[0] == "DescribirImagen") {
+          String response = await ApiService.getImageDescription();
+          _speak(response);
+        } else if (action2[0] == "LeerTexto") {
+          String response = await ApiService.getImageTexto();
+          _speak(response);
+        }
+      }
+
+      if (option.isEmpty && option2.isEmpty) {
+        _speak("No se ha detectado ningun método...");
       }
     }
   }
@@ -186,10 +196,35 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: startListening,
-        backgroundColor: null,
-        child: const Icon(Icons.mic),
+      body: Column(
+        children: [
+          Expanded(
+            flex: 1,
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height / 2,
+              child: base64Image != null
+                  ? Image.memory(
+                      base64Decode(base64Image),
+                      fit: BoxFit.cover,
+                    )
+                  : Container(),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                margin: EdgeInsets.only(bottom: 16.0),
+                child: FloatingActionButton(
+                  onPressed: startListening,
+                  backgroundColor: null,
+                  child: const Icon(Icons.mic),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
