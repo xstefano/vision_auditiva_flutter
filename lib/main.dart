@@ -22,11 +22,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'noni',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'SeeSignal Home Page'),
+      home: const MyHomePage(title: 'Visual APP'),
     );
   }
 }
@@ -190,18 +190,21 @@ class _MyHomePageState extends State<MyHomePage> {
     return str;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            flex: 1,
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height / 2,
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      title: Text(widget.title),
+    ),
+    body: Column(
+      children: [
+        Expanded(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              height: 200.0, // Alto fijo de la imagen
               child: base64Image != null
                   ? Image.memory(
                       base64Decode(base64Image),
@@ -210,22 +213,23 @@ class _MyHomePageState extends State<MyHomePage> {
                   : Container(),
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                margin: EdgeInsets.only(bottom: 16.0),
-                child: FloatingActionButton(
-                  onPressed: startListening,
-                  backgroundColor: null,
-                  child: const Icon(Icons.mic),
-                ),
-              ),
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            width: 400.0, // Ancho fijo del botón
+            height: 500.0, // Alto fijo del botón
+            margin: EdgeInsets.only(bottom: 16.0),
+            child: ElevatedButton(
+              onPressed: startListening,
+              child: const Icon(Icons.mic),
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+    floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+  );
+}
+
 }
