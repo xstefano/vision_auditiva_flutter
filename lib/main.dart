@@ -12,6 +12,10 @@ import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:logger/logger.dart';
 import 'package:camera/camera.dart';
 
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
+
+
 void main() {
   runApp(const MyApp());
 }
@@ -41,6 +45,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final AudioCache audioCache = AudioCache();
   final FlutterTts flutterTts = FlutterTts();
   SpeechToText speech = SpeechToText();
   final logger = Logger();
@@ -79,6 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    audioCache.load('sound.mp3'); // Reemplaza 'sound.mp3' con el nombre de tu archivo de sonido
     _start();
   }
 
@@ -222,8 +228,11 @@ Widget build(BuildContext context) {
             height: 500.0, // Alto fijo del botón
             margin: EdgeInsets.only(bottom: 16.0),
             child: FloatingActionButton(
-              onPressed: startListening,
-              child: const Icon(Icons.mic),
+              onPressed: () {
+              audioCache.play('sound.mp3'); // Reemplaza 'sound.mp3' con el nombre de tu archivo de sonido
+              startListening();
+            },
+            child: const Icon(Icons.mic),
             ),
           ),
         ),
