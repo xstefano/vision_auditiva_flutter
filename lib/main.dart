@@ -54,11 +54,11 @@ class _MyHomePageState extends State<MyHomePage> {
     ],
     'detecta rostro': [
       'DetectarRostro',
-      'Se detectará el rostro de la imagen',
+      'Se detectará los rostro de la imagen',
     ],
     'analiza rostro': [
       'AnalizarRostro',
-      'Se analizará los rostros de la imagen',
+      'Se analizará el rostro de la imagen',
     ],
   };
 
