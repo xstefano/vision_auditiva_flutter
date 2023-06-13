@@ -101,7 +101,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> takePicture() async {
     XFile? picture = await cameraController!.takePicture();
     List<int> bytes = await picture.readAsBytes();
-    base64Image = base64Encode(bytes);
+    setState(() {
+      base64Image = base64Encode(bytes);
+    });
     await ApiService.sendImage(base64Image, "image");
   }
 
@@ -131,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
     lastWords = '';
     bool isAvailable = await speech.initialize();
     if (isAvailable) {
-      takePicture();
+      await takePicture();
       await speech.listen(
         onResult: resultListener,
         localeId: 'es_CL',
@@ -140,54 +142,62 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> resultListener(SpeechRecognitionResult result) async {
-    if (result.finalResult) {
-      logger.i(
-          'Result listener final: ${result.finalResult}, words: ${result.recognizedWords}');
-      setState(() {
-        lastWords = removeDiacritics(result.recognizedWords).toLowerCase();
-      });
+    if (!result.finalResult) return;
 
-      // Verificar si las palabras reconocidas están en el mapa de opciones
-      final option = optionsMap.keys.firstWhere(
-        (key) => key.split(' ').every((word) => lastWords.contains(word)),
-        orElse: () => '',
-      );
+    final recognizedWords =
+        removeDiacritics(result.recognizedWords).toLowerCase();
 
-      final option2 = optionsMap2.keys.firstWhere(
-        (key) => key.split(' ').every((word) => lastWords.contains(word)),
-        orElse: () => '',
-      );
+    if (recognizedWords.contains("asistente") &&
+        recognizedWords.contains("vision")) {
+      final response = await ApiService.getResponse(recognizedWords);
+      _speak(response);
+      return;
+    }
 
-      if (lastWords.contains("asistente") && lastWords.contains("vision")) {
-        final response = await ApiService.getResponse(lastWords);
-        _speak(response);
-        return;
+    String? option;
+
+    option = findOption(optionsMap, recognizedWords);
+    if (option != null) {
+      final action = optionsMap[option]!;
+      await getResponsePython(action);
+      return;
+    }
+
+    option = findOption(optionsMap2, recognizedWords);
+    if (option != null) {
+      final action = optionsMap2[option]!;
+      await getResponseAzure(action);
+      return;
+    }
+
+    _speak("No se ha detectado ningún método...");
+  }
+
+  String? findOption(Map<String, List<String>> map, String recognizedWords) {
+    for (final entry in map.entries) {
+      final key = entry.key;
+      if (key.split(' ').every((word) => recognizedWords.contains(word))) {
+        return key;
       }
+    }
+    return null;
+  }
 
-      // Si la opción existe, realizar la acción correspondiente
-      if (option.isNotEmpty) {
-        final action = optionsMap[option]!;
-        await ApiService.sendRequest(action[0]);
-        _speak(action[1]);
-        await Future.delayed(const Duration(seconds: 5));
-        final lastResponse = await ApiService.getLastResponse();
-        _speak(lastResponse);
-      }
-      if (option2.isNotEmpty) {
-        final action2 = optionsMap2[option2]!;
+  Future<void> getResponsePython(List<String> action) async {
+    await ApiService.sendRequest(action[0]);
+    _speak(action[1]);
+    await Future.delayed(const Duration(seconds: 5));
+    final lastResponse = await ApiService.getLastResponse();
+    _speak(lastResponse);
+  }
 
-        if (action2[0] == "DescribirImagen") {
-          String response = await ApiService.getImageDescription();
-          _speak(response);
-        } else if (action2[0] == "LeerTexto") {
-          String response = await ApiService.getImageTexto();
-          _speak(response);
-        }
-      }
-
-      if (option.isEmpty && option2.isEmpty) {
-        _speak("No se ha detectado ningun método...");
-      }
+  Future<void> getResponseAzure(List<String> action) async {
+    if (action[0] == "DescribirImagen") {
+      final response = await ApiService.getImageDescription();
+      _speak(response);
+    } else if (action[0] == "LeerTexto") {
+      final response = await ApiService.getImageTexto();
+      _speak(response);
     }
   }
 
