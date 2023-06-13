@@ -14,7 +14,6 @@ import 'package:logger/logger.dart';
 import 'package:camera/camera.dart';
 
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -158,6 +157,12 @@ class _MyHomePageState extends State<MyHomePage> {
         (key) => key.split(' ').every((word) => lastWords.contains(word)),
         orElse: () => '',
       );
+
+      if (lastWords.contains("asistente") && lastWords.contains("vision")) {
+        final response = await ApiService.getResponse(lastWords);
+        _speak(response);
+        return;
+      }
 
       // Si la opción existe, realizar la acción correspondiente
       if (option.isNotEmpty) {
