@@ -66,4 +66,10 @@ class ApiService {
         '$baseUrl/api/Vision/read?imageUrl=https://apivideofetcher.azurewebsites.net/Image/image'));
     return response.body;
   }
+
+  static Future<String> getResponse(String request) async {
+    final response = await http
+        .get(Uri.parse('$baseUrl/api/VisionChat/getResponse?request=$request'));
+    return response.body;
+  }
 }
