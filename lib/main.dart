@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Visual APP'),
+      home: const MyHomePage(title: 'Vision Auditiva APP'),
     );
   }
 }
@@ -149,10 +149,8 @@ class _MyHomePageState extends State<MyHomePage> {
     final recognizedWords =
         removeDiacritics(result.recognizedWords).toLowerCase();
 
-    if (recognizedWords.contains("asistente") &&
-        recognizedWords.contains("vision")) {
-      final remainingText =
-          recognizedWords.replaceAll(RegExp(r'asistente|vision'), '');
+    if (recognizedWords.contains("vision")) {
+      final remainingText = recognizedWords.replaceAll(RegExp(r'vision'), '');
       final response = await ApiService.getResponse(remainingText.trim());
       _speak(response);
       return;
