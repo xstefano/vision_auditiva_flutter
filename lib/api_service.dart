@@ -67,6 +67,12 @@ class ApiService {
     return response.body;
   }
 
+  static Future<String> getDetectarRostro() async {
+    final response = await http.get(
+        Uri.parse('https://flaskdockerpy.azurewebsites.net/detectarRostro/'));
+    return response.body;
+  }
+
   static Future<String> getResponse(String request) async {
     final response = await http
         .get(Uri.parse('$baseUrl/api/VisionChat/getResponse?request=$request'));

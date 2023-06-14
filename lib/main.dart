@@ -186,11 +186,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> getResponsePython(List<String> action) async {
-    await ApiService.sendRequest(action[0]);
-    _speak(action[1]);
-    await Future.delayed(const Duration(seconds: 5));
-    final lastResponse = await ApiService.getLastResponse();
-    _speak(lastResponse);
+    if (action[0] == "DetectarRostro") {
+      final response = await ApiService.getDetectarRostro();
+      _speak(response);
+    }
   }
 
   Future<void> getResponseAzure(List<String> action) async {
