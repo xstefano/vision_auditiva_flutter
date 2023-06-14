@@ -10,10 +10,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 
-import 'package:logger/logger.dart';
 import 'package:camera/camera.dart';
-
-import 'package:audioplayers/audioplayers.dart';
 
 void main() {
   runApp(const MyApp());
@@ -45,10 +42,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final iniciarApi = ApiService.getLastResponse();
-  final AudioCache audioCache = AudioCache();
   final FlutterTts flutterTts = FlutterTts();
   SpeechToText speech = SpeechToText();
-  final logger = Logger();
   String lastWords = '';
   String base64Image = Constantes.foto;
 
@@ -84,8 +79,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    audioCache.load(
-        'sound.mp3'); // Reemplaza 'sound.mp3' con el nombre de tu archivo de sonido
     _start();
   }
 
@@ -109,8 +102,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _speak(String text) async {
     await flutterTts.setLanguage('es-ES');
-    await flutterTts.setPitch(1.0);
-    await flutterTts.setSpeechRate(0.7);
+    await flutterTts.setPitch(0.9);
+    await flutterTts.setSpeechRate(0.6);
     await flutterTts.speak(text);
   }
 
@@ -122,11 +115,20 @@ class _MyHomePageState extends State<MyHomePage> {
     return _speak('¡Permiso de micrófono concedido!');
   }
 
+  Future<void> _requestCameraPermission() async {
+    var status = await Permission.camera.request();
+    if (status != PermissionStatus.granted) {
+      return _speak('¡Es necesario acceder a la cámara!');
+    }
+    return _speak('¡Permiso de cámara concedido!');
+  }
+
   Future<void> _start() async {
     await flutterTts.awaitSpeakCompletion(true);
-    await _speak('Hola, Bienvenido a See Signal');
+    await _speak('Hola, Bienvenido a Vision Auditiva');
     await _requestMicrophonePermission();
     _initializeCamera();
+    await _requestCameraPermission();
   }
 
   Future<void> startListening() async {
@@ -226,7 +228,7 @@ class _MyHomePageState extends State<MyHomePage> {
           Expanded(
             child: Align(
               alignment: Alignment.topCenter,
-              child: Container(
+              child: SizedBox(
                 height: 200.0, // Alto fijo de la imagen
                 child: base64Image != null
                     ? Image.memory(
@@ -242,11 +244,9 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Container(
               width: 400.0, // Ancho fijo del botón
               height: 500.0, // Alto fijo del botón
-              margin: EdgeInsets.only(bottom: 16.0),
+              margin: const EdgeInsets.only(bottom: 16.0),
               child: FloatingActionButton(
                 onPressed: () {
-                  audioCache.play(
-                      'sound.mp3'); // Reemplaza 'sound.mp3' con el nombre de tu archivo de sonido
                   startListening();
                 },
                 child: const Icon(Icons.mic),
