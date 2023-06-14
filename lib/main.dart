@@ -151,7 +151,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (recognizedWords.contains("asistente") &&
         recognizedWords.contains("vision")) {
-      final response = await ApiService.getResponse(recognizedWords);
+      final remainingText =
+          recognizedWords.replaceAll(RegExp(r'asistente|vision'), '');
+      final response = await ApiService.getResponse(remainingText.trim());
       _speak(response);
       return;
     }
