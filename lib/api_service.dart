@@ -73,6 +73,12 @@ class ApiService {
     return response.body;
   }
 
+  static Future<String> getAnalizarObjetos() async {
+    final response = await http.get(Uri.parse(
+        '$baseUrl/api/Vision/detectObjects?imageUrl=https://apivideofetcher.azurewebsites.net/Image/image'));
+    return response.body;
+  }
+
   static Future<String> getResponse(String request) async {
     final response = await http
         .get(Uri.parse('$baseUrl/api/VisionChat/getResponse?request=$request'));

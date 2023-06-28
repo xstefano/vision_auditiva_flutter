@@ -12,6 +12,8 @@ import 'package:speech_to_text/speech_recognition_result.dart';
 
 import 'package:camera/camera.dart';
 
+import 'package:audioplayers/audioplayers.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -22,7 +24,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Vision Auditiva',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
@@ -47,18 +49,14 @@ class _MyHomePageState extends State<MyHomePage> {
   String lastWords = '';
   String base64Image = Constantes.foto;
 
+  bool isListening = false; // variable para el boton precionado
+  final AudioCache audioCache = AudioCache(); // para el sonido .mp3
+  bool isSpeaking = false;
+
   final optionsMap = {
-    'analiza objeto': [
-      'AnalizarObjetos',
-      'Se analizará los objetos de la imagen',
-    ],
     'detecta rostro': [
       'DetectarRostro',
       'Se detectará los rostro de la imagen',
-    ],
-    'analiza rostro': [
-      'AnalizarRostro',
-      'Se analizará el rostro de la imagen',
     ],
   };
 
@@ -70,6 +68,10 @@ class _MyHomePageState extends State<MyHomePage> {
     'lee texto': [
       'LeerTexto',
       'Se leera el texto de la imagen',
+    ],
+    'analiza objeto': [
+      'AnalizarObjetos',
+      'Se analizará los objetos de la imagen',
     ],
   };
 
@@ -91,19 +93,10 @@ class _MyHomePageState extends State<MyHomePage> {
     await cameraController!.initialize();
   }
 
-  Future<void> takePicture() async {
-    XFile? picture = await cameraController!.takePicture();
-    List<int> bytes = await picture.readAsBytes();
-    setState(() {
-      base64Image = base64Encode(bytes);
-    });
-    await ApiService.sendImage(base64Image, "image");
-  }
-
   Future<void> _speak(String text) async {
     await flutterTts.setLanguage('es-ES');
     await flutterTts.setPitch(0.9);
-    await flutterTts.setSpeechRate(0.6);
+    await flutterTts.setSpeechRate(0.5);
     await flutterTts.speak(text);
   }
 
@@ -135,12 +128,20 @@ class _MyHomePageState extends State<MyHomePage> {
     lastWords = '';
     bool isAvailable = await speech.initialize();
     if (isAvailable) {
-      await takePicture();
       await speech.listen(
         onResult: resultListener,
         localeId: 'es_CL',
       );
     }
+  }
+
+  Future<void> takePicture() async {
+    XFile? picture = await cameraController!.takePicture();
+    List<int> bytes = await picture.readAsBytes();
+    setState(() {
+      base64Image = base64Encode(bytes);
+    });
+    await ApiService.sendImage(base64Image, "image");
   }
 
   Future<void> resultListener(SpeechRecognitionResult result) async {
@@ -199,6 +200,9 @@ class _MyHomePageState extends State<MyHomePage> {
     } else if (action[0] == "LeerTexto") {
       final response = await ApiService.getImageTexto();
       _speak(response);
+    } else if (action[0] == "AnalizarObjetos") {
+      final response = await ApiService.getAnalizarObjetos();
+      _speak(response);
     }
   }
 
@@ -215,6 +219,10 @@ class _MyHomePageState extends State<MyHomePage> {
     return str;
   }
 
+  void playSound() {
+    audioCache.play('sound.mp3');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -228,7 +236,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Align(
               alignment: Alignment.topCenter,
               child: SizedBox(
-                height: 200.0, // Alto fijo de la imagen
+                height: 250.0, // Alto fijo de la imagen
                 child: base64Image != null
                     ? Image.memory(
                         base64Decode(base64Image),
@@ -238,23 +246,63 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              width: 400.0, // Ancho fijo del botón
-              height: 500.0, // Alto fijo del botón
-              margin: const EdgeInsets.only(bottom: 16.0),
-              child: FloatingActionButton(
-                onPressed: () {
-                  startListening();
-                },
-                child: const Icon(Icons.mic),
+        ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(
+            child: FractionallySizedBox(
+              widthFactor: 0.9, // El botón ocupará el 50% del ancho disponible
+              heightFactor:
+                  0.5, // El botón ocupará el 50% de la altura disponible
+              child: Container(
+                margin:
+                    const EdgeInsets.only(bottom: 16.0, left: 16.0, right: 4.0),
+                child: FloatingActionButton(
+                  onPressed: () {
+                    playSound();
+                    takePicture();
+                    // Acción para el botón izquierdo
+                  },
+                  child: const Icon(Icons.photo),
+                  backgroundColor: Color.fromARGB(
+                      255, 204, 86, 40), // Establecer el color amarillo
+                ),
+              ),
+            ),
+          ),
+          Flexible(
+            child: FractionallySizedBox(
+              widthFactor: 0.9,
+              heightFactor: 0.5,
+              child: Container(
+                margin:
+                    const EdgeInsets.only(bottom: 16.0, left: 4.0, right: 16.0),
+                child: GestureDetector(
+                  onTapDown: (_) {
+                    flutterTts.stop();
+                    playSound();
+                    startListening();
+                  },
+                  onTapUp: (_) {
+                    flutterTts.stop();
+                    // Llamar al método stopListening
+                  },
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      // No se ejecuta nada aquí, el evento onTapDown se encarga de iniciar la escucha
+                    },
+                    child: Icon(Icons.mic),
+                    backgroundColor: isListening ? Colors.green : Colors.green,
+                  ),
+                ),
               ),
             ),
           ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
