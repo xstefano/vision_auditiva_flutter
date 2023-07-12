@@ -2,11 +2,38 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'https://apivideofetcher.azurewebsites.net';
+  static const String baseUrl = 'https://visionauditiva.azurewebsites.net';
+  late String token;
 
-  static Future<void> sendImage(String base64Image, String filename) async {
-    Uri apiUrl = Uri.parse("$baseUrl/Image");
+  ApiService({required String username, required String password}) {
+    _login(username, password);
+  }
+
+  Future<void> _login(String username, String password) async {
+    Uri apiUrl = Uri.parse('$baseUrl/api/Authenticate/Login');
     Map<String, String> headers = {"Content-Type": "application/json"};
+
+    String jsonBody = jsonEncode({
+      "userName": username,
+      "password": password,
+    });
+
+    final response = await http.post(apiUrl, headers: headers, body: jsonBody);
+
+    if (response.statusCode == 200) {
+      final responseBody = json.decode(response.body);
+      token = responseBody['token'];
+    } else {
+      throw Exception('Failed to log in');
+    }
+  }
+
+  Future<void> sendImage(String base64Image, String filename) async {
+    Uri apiUrl = Uri.parse("$baseUrl/Image");
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer $token"
+    };
 
     String jsonBody =
         jsonEncode({"imageBase64": base64Image, "filename": filename});
@@ -14,9 +41,12 @@ class ApiService {
     await http.post(apiUrl, headers: headers, body: jsonBody);
   }
 
-  static Future<void> sendRequest(String function) async {
+  Future<void> sendRequest(String function) async {
     Uri apiUrl = Uri.parse("$baseUrl/api/Request/add");
-    Map<String, String> headers = {"Content-Type": "application/json"};
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer $token"
+    };
 
     String jsonBody = jsonEncode({
       "id": 0,
@@ -28,7 +58,7 @@ class ApiService {
     await http.post(apiUrl, headers: headers, body: jsonBody);
   }
 
-  static Future<String> getLastResponse() async {
+  Future<String> getLastResponse() async {
     Uri apiUrl = Uri.parse('$baseUrl/api/Reply/getlast');
     final response = await http.get(apiUrl);
     if (response.statusCode == 200) {
@@ -41,45 +71,38 @@ class ApiService {
     }
   }
 
-  static Future<String> getLastRequest() async {
-    Uri apiUrl = Uri.parse('$baseUrl/api/Request/getlast');
-    final response = await http.get(apiUrl);
-
-    if (response.statusCode == 200) {
-      final responseBody = json.decode(response.body);
-      final result = responseBody['result'];
-      final responseValue = result['imageUrl'];
-      return responseValue;
-    } else {
-      throw Exception('Failed to get last request');
-    }
-  }
-
-  static Future<String> getImageDescription() async {
-    final response = await http.get(Uri.parse(
-        '$baseUrl/api/Vision/describe?imageUrl=https://apivideofetcher.azurewebsites.net/Image/image'));
-    return response.body;
-  }
-
-  static Future<String> getImageTexto() async {
-    final response = await http.get(Uri.parse(
-        '$baseUrl/api/Vision/read?imageUrl=https://apivideofetcher.azurewebsites.net/Image/image'));
-    return response.body;
-  }
-
-  static Future<String> getDetectarRostro() async {
+  Future<String> getImageDescription() async {
     final response = await http.get(
-        Uri.parse('https://flaskdockerpy.azurewebsites.net/detectarRostro/'));
+        Uri.parse(
+            '$baseUrl/api/CognitiveVision/describe?imageUrl=$baseUrl/Image/image'),
+        headers: {"Authorization": "Bearer $token"});
     return response.body;
   }
 
-  static Future<String> getAnalizarObjetos() async {
-    final response = await http.get(Uri.parse(
-        '$baseUrl/api/Vision/detectObjects?imageUrl=https://apivideofetcher.azurewebsites.net/Image/image'));
+  Future<String> getImageTexto() async {
+    final response = await http.get(
+        Uri.parse(
+            '$baseUrl/api/CognitiveVision/read?imageUrl=$baseUrl/Image/image'),
+        headers: {"Authorization": "Bearer $token"});
     return response.body;
   }
 
-  static Future<String> getResponse(String request) async {
+  Future<String> getDetectarRostro() async {
+    final response = await http.get(
+        Uri.parse('https://flaskdockerpy.azurewebsites.net/detectarRostro/'),
+        headers: {"Authorization": "Bearer $token"});
+    return response.body;
+  }
+
+  Future<String> getAnalizarObjetos() async {
+    final response = await http.get(
+        Uri.parse(
+            '$baseUrl/api/CognitiveVision/detectObjects?imageUrl=$baseUrl/Image/image'),
+        headers: {"Authorization": "Bearer $token"});
+    return response.body;
+  }
+
+  Future<String> getResponse(String request) async {
     final response = await http
         .get(Uri.parse('$baseUrl/api/VisionChat/getResponse?request=$request'));
     return response.body;

@@ -43,7 +43,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final iniciarApi = ApiService.getLastResponse();
+  final ApiService apiService =
+      // Acceso Personal de nuestra base de datos
+      ApiService(username: '[user]', password: '[pass]');
+
   final FlutterTts flutterTts = FlutterTts();
   SpeechToText speech = SpeechToText();
   String lastWords = '';
@@ -141,7 +144,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       base64Image = base64Encode(bytes);
     });
-    await ApiService.sendImage(base64Image, "image");
+    await apiService.sendImage(base64Image, "image");
   }
 
   Future<void> resultListener(SpeechRecognitionResult result) async {
@@ -152,7 +155,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (recognizedWords.contains("vision")) {
       final remainingText = recognizedWords.replaceAll(RegExp(r'vision'), '');
-      final response = await ApiService.getResponse(remainingText.trim());
+      final response = await apiService.getResponse(remainingText.trim());
       _speak(response);
       return;
     }
@@ -188,20 +191,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> getResponsePython(List<String> action) async {
     if (action[0] == "DetectarRostro") {
-      final response = await ApiService.getDetectarRostro();
+      final response = await apiService.getDetectarRostro();
       _speak(response);
     }
   }
 
   Future<void> getResponseAzure(List<String> action) async {
     if (action[0] == "DescribirImagen") {
-      final response = await ApiService.getImageDescription();
+      final response = await apiService.getImageDescription();
       _speak(response);
     } else if (action[0] == "LeerTexto") {
-      final response = await ApiService.getImageTexto();
+      final response = await apiService.getImageTexto();
       _speak(response);
     } else if (action[0] == "AnalizarObjetos") {
-      final response = await ApiService.getAnalizarObjetos();
+      final response = await apiService.getAnalizarObjetos();
       _speak(response);
     }
   }
@@ -237,6 +240,7 @@ class _MyHomePageState extends State<MyHomePage> {
               alignment: Alignment.topCenter,
               child: SizedBox(
                 height: 250.0, // Alto fijo de la imagen
+                // ignore: unnecessary_null_comparison
                 child: base64Image != null
                     ? Image.memory(
                         base64Decode(base64Image),
@@ -266,9 +270,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     takePicture();
                     // Acción para el botón izquierdo
                   },
-                  child: const Icon(Icons.photo),
-                  backgroundColor: Color.fromARGB(
-                      255, 204, 86, 40), // Establecer el color amarillo
+                  backgroundColor: const Color.fromARGB(255, 204, 86, 40),
+                  child:
+                      const Icon(Icons.photo), // Establecer el color amarillo
                 ),
               ),
             ),
@@ -294,8 +298,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     onPressed: () {
                       // No se ejecuta nada aquí, el evento onTapDown se encarga de iniciar la escucha
                     },
-                    child: Icon(Icons.mic),
                     backgroundColor: isListening ? Colors.green : Colors.green,
+                    child: const Icon(Icons.mic),
                   ),
                 ),
               ),
