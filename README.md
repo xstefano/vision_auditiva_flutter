@@ -13,7 +13,7 @@
     La primera imagen que aparece en la app es temporal, se reemplazará por la foto tomada por el usuario.
   </div>
   <div style="flex: 1;">
-    <img src="https://i.imgur.com/KINxS5S.jpg" width="210">
+    <img src="https://i.imgur.com/7SQwQ0U.png" width="210">
   </div>
 </div>
 
