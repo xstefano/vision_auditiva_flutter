@@ -11,6 +11,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:see_signal/services/api_service.dart';
 import 'package:see_signal/utils/datos.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({Key? key, required this.title}) : super(key: key);
   final String title;
@@ -62,6 +64,52 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _start();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Gracias por descargar la App'),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Esta aplicación fue diseñada por 2 estudiantes de la Universidad Privada del Norte, Perú.',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Siéntase libre de utilizar todas las funciones de la aplicación sin problemas.',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              InkWell(
+                child: const Text(
+                  'Link del codigo en Github con los metodos explicados',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                onTap: () {
+                  // ignore: deprecated_member_use
+                  launch('https://github.com/xstefano/vision_auditiva_flutter');
+                },
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cerrar'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Future<void> _initializeCamera() async {

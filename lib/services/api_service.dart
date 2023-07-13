@@ -102,6 +102,7 @@ class ApiService {
     return response.body;
   }
 
+  // Api para CHATGPT
   Future<String> getResponse(String request) async {
     final response = await http
         .get(Uri.parse('$baseUrl/api/VisionChat/getResponse?request=$request'));
