@@ -104,8 +104,10 @@ class ApiService {
 
   // Api para CHATGPT
   Future<String> getResponse(String request) async {
-    final response = await http
-        .get(Uri.parse('$baseUrl/api/VisionChat/getResponse?request=$request'));
+    final response = await http.get(
+        
+        Uri.parse('$baseUrl/api/CognitiveChat/getResponse?request=$request'),
+        headers: {"Authorization": "Bearer $token"});
     return response.body;
   }
 }

@@ -177,8 +177,10 @@ class _HomePageState extends State<HomePage> {
 
     final recognizedWords =
         removeDiacritics(result.recognizedWords).toLowerCase();
+    // para saber por consola lo que escuchó
+    //print(recognizedWords);
 
-    if (recognizedWords.contains("visión")) {
+    if (recognizedWords.contains("vision")) {
       final remainingText = recognizedWords.replaceAll(RegExp(r'visión'), '');
       final response = await apiService.getResponse(remainingText.trim());
       _speak(response);
